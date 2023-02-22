@@ -56,7 +56,8 @@ contract BunniLpZapIn is ReentrancyGuard, Multicall, SelfPermit {
     /// Zaps
     /// -----------------------------------------------------------------------
 
-    /// @notice Deposits tokens into a Bunni LP position and then stakes it in a gauge.
+    /// @notice Deposits tokens into a Bunni LP position and then stakes it in a gauge. Any leftover tokens
+    /// are refunded to the recipient address.
     /// @dev depositParams.recipient is always overridden to address(this) so can just make it 0,
     /// depositParams.amount0Desired and depositParams.amount1Desired are overridden to the balances
     /// of address(this) if the corresponding useContractBalance flag is set to true.
@@ -147,7 +148,8 @@ contract BunniLpZapIn is ReentrancyGuard, Multicall, SelfPermit {
     /// 0x support
     /// -----------------------------------------------------------------------
 
-    /// @notice Swaps between two regular tokens using 0x.
+    /// @notice Swaps between two regular tokens using 0x. Leftover input tokens are refunded
+    /// to refundRecipient.
     /// @dev Used in conjuction with the 0x API https://www.0x.org/docs/api
     /// @param tokenIn The input token
     /// @param tokenAmountIn The amount of token input
