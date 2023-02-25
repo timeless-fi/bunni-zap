@@ -13,3 +13,6 @@
 [submodule "lib/gauge-foundry"]
 	path = lib/gauge-foundry
 	url = https://github.com/timeless-fi/gauge-foundry
+[submodule "lib/timeless"]
+	path = lib/timeless
+	url = https://github.com/timeless-fi/timeless
