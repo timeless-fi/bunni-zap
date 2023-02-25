@@ -10,6 +10,8 @@ import {ERC20} from "solmate/tokens/ERC20.sol";
 import {ReentrancyGuard} from "solmate/utils/ReentrancyGuard.sol";
 import {SafeTransferLib} from "solmate/utils/SafeTransferLib.sol";
 
+import {Gate, IxPYT} from "timeless/Gate.sol";
+
 import {Multicall} from "./lib/Multicall.sol";
 import {SelfPermit} from "./lib/SelfPermit.sol";
 
@@ -134,6 +136,78 @@ contract BunniLpZapIn is ReentrancyGuard, Multicall, SelfPermit {
     }
 
     /// -----------------------------------------------------------------------
+    /// Timeless yield tokens support
+    /// -----------------------------------------------------------------------
+
+    /// @notice Mints Timeless yield tokens using the underlying asset.
+    /// @param gate The Gate contract to use for minting the yield tokens
+    /// @param nytRecipient The recipient of the minted NYT
+    /// @param pytRecipient The recipient of the minted PYT
+    /// @param vault The vault to mint NYT and PYT for
+    /// @param xPYT The xPYT contract to deposit the minted PYT into. Set to 0 to receive raw PYT instead.
+    /// @param underlyingAmount The amount of underlying tokens to use
+    /// @param useContractBalance Set to true to use the contract's token balance as token input
+    /// @return mintAmount The amount of NYT and PYT minted (the amounts are equal)
+    function enterWithUnderlying(
+        Gate gate,
+        address nytRecipient,
+        address pytRecipient,
+        address vault,
+        IxPYT xPYT,
+        uint256 underlyingAmount,
+        bool useContractBalance
+    ) external nonReentrant returns (uint256 mintAmount) {
+        // transfer tokens in
+        ERC20 underlying = gate.getUnderlyingOfVault(vault);
+        if (!useContractBalance) {
+            underlying.safeTransferFrom(msg.sender, address(this), underlyingAmount);
+        }
+
+        // mint yield tokens
+        underlying.safeApprove(address(gate), underlyingAmount);
+        mintAmount = gate.enterWithUnderlying(nytRecipient, pytRecipient, vault, xPYT, underlyingAmount);
+
+        // reset allowance
+        if (underlying.allowance(address(this), address(gate)) != 0) {
+            underlying.safeApprove(address(gate), 0);
+        }
+    }
+
+    /// @notice Mints Timeless yield tokens using the vault token.
+    /// @param gate The Gate contract to use for minting the yield tokens
+    /// @param nytRecipient The recipient of the minted NYT
+    /// @param pytRecipient The recipient of the minted PYT
+    /// @param vault The vault to mint NYT and PYT for
+    /// @param xPYT The xPYT contract to deposit the minted PYT into. Set to 0 to receive raw PYT instead.
+    /// @param vaultSharesAmount The amount of vault share tokens to use
+    /// @param useContractBalance Set to true to use the contract's token balance as token input
+    /// @return mintAmount The amount of NYT and PYT minted (the amounts are equal)
+    function enterWithVaultShares(
+        Gate gate,
+        address nytRecipient,
+        address pytRecipient,
+        address vault,
+        IxPYT xPYT,
+        uint256 vaultSharesAmount,
+        bool useContractBalance
+    ) external nonReentrant returns (uint256 mintAmount) {
+        // transfer tokens in
+        ERC20 vaultToken = ERC20(vault);
+        if (!useContractBalance) {
+            vaultToken.safeTransferFrom(msg.sender, address(this), vaultSharesAmount);
+        }
+
+        // mint yield tokens
+        vaultToken.safeApprove(address(gate), vaultSharesAmount);
+        mintAmount = gate.enterWithVaultShares(nytRecipient, pytRecipient, vault, xPYT, vaultSharesAmount);
+
+        // reset allowance
+        if (vaultToken.allowance(address(this), address(gate)) != 0) {
+            vaultToken.safeApprove(address(gate), 0);
+        }
+    }
+
+    /// -----------------------------------------------------------------------
     /// WETH support
     /// -----------------------------------------------------------------------
 
@@ -157,7 +231,7 @@ contract BunniLpZapIn is ReentrancyGuard, Multicall, SelfPermit {
     /// @param minAmountOut The minimum acceptable token output amount, used for slippage checking.
     /// @param recipient The recipient of the token output
     /// @param refundRecipient The recipient of refunded input tokens
-    /// @param useContractBalance Set to true to use the Contract's token balance as token input
+    /// @param useContractBalance Set to true to use the contract's token balance as token input
     /// @param deadline The Unix timestamp (in seconds) after which the call will be reverted
     /// @param swapData The call data to zeroExProxy to execute the swap, obtained from
     /// the https://api.0x.org/swap/v1/quote endpoint
