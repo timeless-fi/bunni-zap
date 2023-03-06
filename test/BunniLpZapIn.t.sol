@@ -58,6 +58,7 @@ contract BunniLpZapInTest is Test {
             false
         );
 
+        assertGt(shares, 0, "shares is zero");
         assertEq(gauge.balanceOf(address(this)), shares, "didn't receive gauge shares");
         assertEq(token0.balanceOf(address(zap)), 0, "zap has token0 balance");
         assertEq(token1.balanceOf(address(zap)), 0, "zap has token1 balance");
@@ -95,6 +96,7 @@ contract BunniLpZapInTest is Test {
             false
         );
 
+        assertGt(shares, 0, "shares is zero");
         assertEq(gauge.balanceOf(address(this)), shares, "didn't receive gauge shares");
         assertEq(token0.balanceOf(address(zap)), 0, "zap has token0 balance");
         assertEq(token1.balanceOf(address(zap)), 0, "zap has token1 balance");
@@ -132,7 +134,122 @@ contract BunniLpZapInTest is Test {
             true
         );
 
+        assertGt(shares, 0, "shares is zero");
         assertEq(gauge.balanceOf(address(this)), shares, "didn't receive gauge shares");
+        assertEq(token0.balanceOf(address(zap)), 0, "zap has token0 balance");
+        assertEq(token1.balanceOf(address(zap)), 0, "zap has token1 balance");
+    }
+
+    function test_basicAdd_noStake() external {
+        uint256 amount0Desired = 1e18;
+        uint256 amount1Desired = 1.77e18;
+
+        // mint tokens
+        deal(address(token0), address(this), amount0Desired);
+        deal(address(token1), address(this), amount1Desired);
+
+        BunniKey memory key = BunniKey({
+            pool: IUniswapV3Pool(0x9A834b70C07C81a9fcD6F22E842BF002fBfFbe4D),
+            tickLower: -276331,
+            tickUpper: -276327
+        });
+        (uint256 shares,,,) = zap.zapInNoStake(
+            IBunniHub.DepositParams({
+                key: key,
+                amount0Desired: amount0Desired,
+                amount1Desired: amount1Desired,
+                amount0Min: 0,
+                amount1Min: 0,
+                deadline: block.timestamp,
+                recipient: address(this)
+            }),
+            token0,
+            token1,
+            address(this),
+            0,
+            false,
+            false,
+            false
+        );
+
+        assertGt(shares, 0, "shares is zero");
+        assertEq(zap.bunniHub().getBunniToken(key).balanceOf(address(this)), shares, "didn't receive LP shares");
+        assertEq(token0.balanceOf(address(zap)), 0, "zap has token0 balance");
+        assertEq(token1.balanceOf(address(zap)), 0, "zap has token1 balance");
+    }
+
+    function test_basicAdd_noStake_usingContractBalance() external {
+        uint256 amount0Desired = 1e18;
+        uint256 amount1Desired = 1.77e18;
+
+        // mint tokens
+        deal(address(token0), address(zap), amount0Desired);
+        deal(address(token1), address(zap), amount1Desired);
+
+        BunniKey memory key = BunniKey({
+            pool: IUniswapV3Pool(0x9A834b70C07C81a9fcD6F22E842BF002fBfFbe4D),
+            tickLower: -276331,
+            tickUpper: -276327
+        });
+        (uint256 shares,,,) = zap.zapInNoStake(
+            IBunniHub.DepositParams({
+                key: key,
+                amount0Desired: amount0Desired,
+                amount1Desired: amount1Desired,
+                amount0Min: 0,
+                amount1Min: 0,
+                deadline: block.timestamp,
+                recipient: address(this)
+            }),
+            token0,
+            token1,
+            address(this),
+            0,
+            true,
+            true,
+            false
+        );
+
+        assertGt(shares, 0, "shares is zero");
+        assertEq(zap.bunniHub().getBunniToken(key).balanceOf(address(this)), shares, "didn't receive LP shares");
+        assertEq(token0.balanceOf(address(zap)), 0, "zap has token0 balance");
+        assertEq(token1.balanceOf(address(zap)), 0, "zap has token1 balance");
+    }
+
+    function test_basicAdd_noStake_withCompound() external {
+        uint256 amount0Desired = 1e18;
+        uint256 amount1Desired = 1.77e18;
+
+        // mint tokens
+        deal(address(token0), address(this), amount0Desired);
+        deal(address(token1), address(this), amount1Desired);
+
+        BunniKey memory key = BunniKey({
+            pool: IUniswapV3Pool(0x9A834b70C07C81a9fcD6F22E842BF002fBfFbe4D),
+            tickLower: -276331,
+            tickUpper: -276327
+        });
+        (uint256 shares,,,) = zap.zapInNoStake(
+            IBunniHub.DepositParams({
+                key: key,
+                amount0Desired: amount0Desired,
+                amount1Desired: amount1Desired,
+                amount0Min: 0,
+                amount1Min: 0,
+                deadline: block.timestamp,
+                recipient: address(this)
+            }),
+            token0,
+            token1,
+            address(this),
+            0,
+            false,
+            false,
+            true
+        );
+
+        assertGt(shares, 0, "shares is zero");
+        assertEq(zap.bunniHub().getBunniToken(key).balanceOf(address(this)), shares, "didn't receive LP shares");
         assertEq(token0.balanceOf(address(zap)), 0, "zap has token0 balance");
         assertEq(token1.balanceOf(address(zap)), 0, "zap has token1 balance");
     }

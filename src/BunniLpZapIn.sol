@@ -135,6 +135,76 @@ contract BunniLpZapIn is ReentrancyGuard, Multicall, SelfPermit {
         }
     }
 
+    /// @notice Deposits tokens into a Bunni LP position. Any leftover tokens
+    /// are refunded to the recipient address.
+    /// @dev depositParams.recipient will receive the Bunni LP tokens.
+    /// depositParams.amount0Desired and depositParams.amount1Desired are overridden to the balances
+    /// of address(this) if the corresponding useContractBalance flag is set to true.
+    /// @param depositParams The deposit params passed to BunniHub
+    /// @param token0 The token0 of the Uniswap pair to LP into
+    /// @param token1 The token1 of the Uniswap pair to LP into
+    /// @param recipient The recipient of the staked gauge position
+    /// @param sharesMin The minimum acceptable amount of shares received. Used for controlling slippage.
+    /// @param useContractBalance0 Set to true to use the token0 balance of address(this) instead of msg.sender
+    /// @param useContractBalance1 Set to true to use the token1 balance of address(this) instead of msg.sender
+    /// @param compound Set to true to compound the Bunni pool before depositing
+    /// @return shares The new share tokens minted to the sender
+    /// @return addedLiquidity The new liquidity amount as a result of the increase
+    /// @return amount0 The amount of token0 to acheive resulting liquidity
+    /// @return amount1 The amount of token1 to acheive resulting liquidity
+    function zapInNoStake(
+        IBunniHub.DepositParams memory depositParams,
+        ERC20 token0,
+        ERC20 token1,
+        address recipient,
+        uint256 sharesMin,
+        bool useContractBalance0,
+        bool useContractBalance1,
+        bool compound
+    )
+        external
+        virtual
+        nonReentrant
+        returns (uint256 shares, uint128 addedLiquidity, uint256 amount0, uint256 amount1)
+    {
+        // transfer tokens in and modify deposit params
+        if (!useContractBalance0) {
+            token0.safeTransferFrom(msg.sender, address(this), depositParams.amount0Desired);
+        } else {
+            depositParams.amount0Desired = token0.balanceOf(address(this));
+        }
+        if (!useContractBalance1) {
+            token1.safeTransferFrom(msg.sender, address(this), depositParams.amount1Desired);
+        } else {
+            depositParams.amount1Desired = token1.balanceOf(address(this));
+        }
+
+        // compound if requested
+        if (compound) {
+            bunniHub.compound(depositParams.key);
+        }
+
+        // approve tokens to Bunni
+        token0.safeApprove(address(bunniHub), depositParams.amount0Desired);
+        token1.safeApprove(address(bunniHub), depositParams.amount1Desired);
+
+        // deposit tokens into Bunni
+        (shares, addedLiquidity, amount0, amount1) = bunniHub.deposit(depositParams);
+        if (shares < sharesMin) {
+            revert BunniLpZapIn__InsufficientOutput();
+        }
+
+        // refund tokens
+        uint256 balance = token0.balanceOf(address(this));
+        if (balance != 0) {
+            token0.safeTransfer(recipient, balance);
+        }
+        balance = token1.balanceOf(address(this));
+        if (balance != 0) {
+            token1.safeTransfer(recipient, balance);
+        }
+    }
+
     /// -----------------------------------------------------------------------
     /// Timeless yield tokens support
     /// -----------------------------------------------------------------------
