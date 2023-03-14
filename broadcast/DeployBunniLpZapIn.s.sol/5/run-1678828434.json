@@ -36,26 +36,11 @@
       "isFixedGasLimit": false
     }
   ],
-  "receipts": [
-    {
-      "transactionHash": "0x1539e5e8016101c0948d3d2825e4a9a6f59f9e3752a36d2891fc9031d80f5e8d",
-      "transactionIndex": "0xe",
-      "blockHash": "0xe4052e64562ea008b49ecb50b1dd30923adba13e923cbd963278dedec8ff5da1",
-      "blockNumber": "0x8413d8",
-      "from": "0xfBe09B7A6C6cc3A72B4CA41cdD9c88AC62bb7937",
-      "to": "0x9fBB3DF7C40Da2e5A0dE984fFE2CCB7C47cd0ABf",
-      "cumulativeGasUsed": "0x2fcd3f",
-      "gasUsed": "0x26722f",
-      "contractAddress": null,
-      "logs": [],
-      "status": "0x1",
-      "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
-      "type": "0x2",
-      "effectiveGasPrice": "0x161cf2c2a"
-    }
-  ],
+  "receipts": [],
   "libraries": [],
-  "pending": [],
+  "pending": [
+    "0x1539e5e8016101c0948d3d2825e4a9a6f59f9e3752a36d2891fc9031d80f5e8d"
+  ],
   "path": "/Users/zefram/Documents/GitHub/bunni-zap/broadcast/DeployBunniLpZapIn.s.sol/5/run-latest.json",
   "returns": {
     "c": {
@@ -63,7 +48,7 @@
       "value": "0x29CA26B49A4DbF7C7B50dAD5f005C606DE3D8F28"
     }
   },
-  "timestamp": 1678828488,
+  "timestamp": 1678828434,
   "chain": 5,
   "multi": false,
   "commit": "5235825"
