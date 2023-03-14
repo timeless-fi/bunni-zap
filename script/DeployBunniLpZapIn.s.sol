@@ -14,7 +14,7 @@ contract DeployBunniLpZapInScript is CREATE3Script {
     function run() external returns (BunniLpZapIn c) {
         uint256 deployerPrivateKey = uint256(vm.envBytes32("PRIVATE_KEY"));
 
-        address zeroExProxy = vm.envAddress("ZEROEX_PROXY");
+        address zeroExProxy = vm.envAddress(string.concat("ZEROEX_PROXY_", block.chainid.toString()));
         address weth = vm.envAddress(string.concat("WETH_", block.chainid.toString()));
         address bunniHub = vm.envAddress("BUNNI_HUB");
 
