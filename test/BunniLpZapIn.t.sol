@@ -9,6 +9,7 @@ contract BunniLpZapInTest is Test {
     BunniLpZapIn zap;
     ERC20 constant token0 = ERC20(0x853d955aCEf822Db058eb8505911ED77F175b99e); // FRAX
     ERC20 constant token1 = ERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48); // USDC
+    IUniswapV3Pool constant uniswapPool = IUniswapV3Pool(0x9A834b70C07C81a9fcD6F22E842BF002fBfFbe4D);
     ILiquidityGauge constant gauge = ILiquidityGauge(0x471A34823DDd9506fe8dFD6BC5c2890e4114Fafe);
     Gate constant gate = Gate(0x36b49ebF089BE8860d7fC60f2553461E9Cc8e9e2); // Yearn gate
     address constant yvusdc = 0xa354F35829Ae975e850e23e9615b11Da1B3dC4DE;
@@ -36,11 +37,7 @@ contract BunniLpZapInTest is Test {
 
         (uint256 shares,,,) = zap.zapIn(
             IBunniHub.DepositParams({
-                key: BunniKey({
-                    pool: IUniswapV3Pool(0x9A834b70C07C81a9fcD6F22E842BF002fBfFbe4D),
-                    tickLower: -276331,
-                    tickUpper: -276327
-                }),
+                key: BunniKey({pool: uniswapPool, tickLower: -276331, tickUpper: -276327}),
                 amount0Desired: amount0Desired,
                 amount1Desired: amount1Desired,
                 amount0Min: 0,
@@ -74,11 +71,7 @@ contract BunniLpZapInTest is Test {
 
         (uint256 shares,,,) = zap.zapIn(
             IBunniHub.DepositParams({
-                key: BunniKey({
-                    pool: IUniswapV3Pool(0x9A834b70C07C81a9fcD6F22E842BF002fBfFbe4D),
-                    tickLower: -276331,
-                    tickUpper: -276327
-                }),
+                key: BunniKey({pool: uniswapPool, tickLower: -276331, tickUpper: -276327}),
                 amount0Desired: amount0Desired,
                 amount1Desired: amount1Desired,
                 amount0Min: 0,
@@ -112,11 +105,7 @@ contract BunniLpZapInTest is Test {
 
         (uint256 shares,,,) = zap.zapIn(
             IBunniHub.DepositParams({
-                key: BunniKey({
-                    pool: IUniswapV3Pool(0x9A834b70C07C81a9fcD6F22E842BF002fBfFbe4D),
-                    tickLower: -276331,
-                    tickUpper: -276327
-                }),
+                key: BunniKey({pool: uniswapPool, tickLower: -276331, tickUpper: -276327}),
                 amount0Desired: amount0Desired,
                 amount1Desired: amount1Desired,
                 amount0Min: 0,
@@ -148,11 +137,7 @@ contract BunniLpZapInTest is Test {
         deal(address(token0), address(this), amount0Desired);
         deal(address(token1), address(this), amount1Desired);
 
-        BunniKey memory key = BunniKey({
-            pool: IUniswapV3Pool(0x9A834b70C07C81a9fcD6F22E842BF002fBfFbe4D),
-            tickLower: -276331,
-            tickUpper: -276327
-        });
+        BunniKey memory key = BunniKey({pool: uniswapPool, tickLower: -276331, tickUpper: -276327});
         (uint256 shares,,,) = zap.zapInNoStake(
             IBunniHub.DepositParams({
                 key: key,
@@ -186,11 +171,7 @@ contract BunniLpZapInTest is Test {
         deal(address(token0), address(zap), amount0Desired);
         deal(address(token1), address(zap), amount1Desired);
 
-        BunniKey memory key = BunniKey({
-            pool: IUniswapV3Pool(0x9A834b70C07C81a9fcD6F22E842BF002fBfFbe4D),
-            tickLower: -276331,
-            tickUpper: -276327
-        });
+        BunniKey memory key = BunniKey({pool: uniswapPool, tickLower: -276331, tickUpper: -276327});
         (uint256 shares,,,) = zap.zapInNoStake(
             IBunniHub.DepositParams({
                 key: key,
@@ -224,11 +205,7 @@ contract BunniLpZapInTest is Test {
         deal(address(token0), address(this), amount0Desired);
         deal(address(token1), address(this), amount1Desired);
 
-        BunniKey memory key = BunniKey({
-            pool: IUniswapV3Pool(0x9A834b70C07C81a9fcD6F22E842BF002fBfFbe4D),
-            tickLower: -276331,
-            tickUpper: -276327
-        });
+        BunniKey memory key = BunniKey({pool: uniswapPool, tickLower: -276331, tickUpper: -276327});
         (uint256 shares,,,) = zap.zapInNoStake(
             IBunniHub.DepositParams({
                 key: key,
@@ -250,6 +227,87 @@ contract BunniLpZapInTest is Test {
 
         assertGt(shares, 0, "shares is zero");
         assertEq(zap.bunniHub().getBunniToken(key).balanceOf(address(this)), shares, "didn't receive LP shares");
+        assertEq(token0.balanceOf(address(zap)), 0, "zap has token0 balance");
+        assertEq(token1.balanceOf(address(zap)), 0, "zap has token1 balance");
+    }
+
+    function test_multicall_wrapEthAndZap() external {
+        uint256 amount0Desired = 1e18;
+        uint256 amount1Desired = 1.77e18;
+
+        // mint tokens
+        deal(address(token0), address(this), amount0Desired);
+        deal(address(token1), address(this), amount1Desired);
+
+        // make multicall
+        bytes[] memory calls = new bytes[](2);
+        calls[0] = abi.encodeWithSelector(BunniLpZapIn.wrapEthInput.selector);
+        calls[1] = abi.encodeWithSelector(
+            BunniLpZapIn.zapIn.selector,
+            IBunniHub.DepositParams({
+                key: BunniKey({pool: uniswapPool, tickLower: -276331, tickUpper: -276327}),
+                amount0Desired: amount0Desired,
+                amount1Desired: amount1Desired,
+                amount0Min: 0,
+                amount1Min: 0,
+                deadline: block.timestamp,
+                recipient: address(0)
+            }),
+            gauge,
+            token0,
+            token1,
+            address(this),
+            0,
+            false,
+            false,
+            false
+        );
+        bytes[] memory results = zap.multicall{value: 1 ether}(calls);
+        (uint256 shares,,,) = abi.decode(results[1], (uint256, uint128, uint256, uint256));
+
+        assertGt(shares, 0, "shares is zero");
+        assertEq(gauge.balanceOf(address(this)), shares, "didn't receive gauge shares");
+        assertEq(token0.balanceOf(address(zap)), 0, "zap has token0 balance");
+        assertEq(token1.balanceOf(address(zap)), 0, "zap has token1 balance");
+    }
+
+    function test_multicall_wrapEthAndZapAndReadUniswapState() external {
+        uint256 amount0Desired = 1e18;
+        uint256 amount1Desired = 1.77e18;
+
+        // mint tokens
+        deal(address(token0), address(this), amount0Desired);
+        deal(address(token1), address(this), amount1Desired);
+
+        // make multicall
+        bytes[] memory calls = new bytes[](3);
+        calls[0] = abi.encodeWithSelector(BunniLpZapIn.wrapEthInput.selector);
+        calls[1] = abi.encodeWithSelector(
+            BunniLpZapIn.zapIn.selector,
+            IBunniHub.DepositParams({
+                key: BunniKey({pool: uniswapPool, tickLower: -276331, tickUpper: -276327}),
+                amount0Desired: amount0Desired,
+                amount1Desired: amount1Desired,
+                amount0Min: 0,
+                amount1Min: 0,
+                deadline: block.timestamp,
+                recipient: address(0)
+            }),
+            gauge,
+            token0,
+            token1,
+            address(this),
+            0,
+            false,
+            false,
+            false
+        );
+        calls[2] = abi.encodeWithSelector(BunniLpZapIn.uniswapV3PoolState.selector, uniswapPool);
+        bytes[] memory results = zap.multicall{value: 1 ether}(calls);
+        (uint256 shares,,,) = abi.decode(results[1], (uint256, uint128, uint256, uint256));
+
+        assertGt(shares, 0, "shares is zero");
+        assertEq(gauge.balanceOf(address(this)), shares, "didn't receive gauge shares");
         assertEq(token0.balanceOf(address(zap)), 0, "zap has token0 balance");
         assertEq(token1.balanceOf(address(zap)), 0, "zap has token1 balance");
     }

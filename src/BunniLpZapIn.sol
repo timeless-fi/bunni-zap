@@ -88,6 +88,7 @@ contract BunniLpZapIn is ReentrancyGuard, Multicall, SelfPermit {
         bool compound
     )
         external
+        payable
         virtual
         nonReentrant
         returns (uint256 shares, uint128 addedLiquidity, uint256 amount0, uint256 amount1)
@@ -163,6 +164,7 @@ contract BunniLpZapIn is ReentrancyGuard, Multicall, SelfPermit {
         bool compound
     )
         external
+        payable
         virtual
         nonReentrant
         returns (uint256 shares, uint128 addedLiquidity, uint256 amount0, uint256 amount1)
@@ -226,7 +228,7 @@ contract BunniLpZapIn is ReentrancyGuard, Multicall, SelfPermit {
         IxPYT xPYT,
         uint256 underlyingAmount,
         bool useContractBalance
-    ) external nonReentrant returns (uint256 mintAmount) {
+    ) external payable nonReentrant returns (uint256 mintAmount) {
         // transfer tokens in
         ERC20 underlying = gate.getUnderlyingOfVault(vault);
         if (!useContractBalance) {
@@ -260,7 +262,7 @@ contract BunniLpZapIn is ReentrancyGuard, Multicall, SelfPermit {
         IxPYT xPYT,
         uint256 vaultSharesAmount,
         bool useContractBalance
-    ) external nonReentrant returns (uint256 mintAmount) {
+    ) external payable nonReentrant returns (uint256 mintAmount) {
         // transfer tokens in
         ERC20 vaultToken = ERC20(vault);
         if (!useContractBalance) {
@@ -374,7 +376,7 @@ contract BunniLpZapIn is ReentrancyGuard, Multicall, SelfPermit {
     /// @return liquidity The liquidity at the current price of the pool
     function uniswapV3PoolState(IUniswapV3Pool pool)
         external
-        view
+        payable
         returns (uint160 sqrtPriceX96, int24 tick, uint128 liquidity)
     {
         (sqrtPriceX96, tick,,,,,) = pool.slot0();
