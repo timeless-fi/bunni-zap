@@ -121,9 +121,23 @@ contract BunniLpZapIn is ReentrancyGuard, Multicall, SelfPermit {
             revert BunniLpZapIn__InsufficientOutput();
         }
 
+        // reset approvals
+        if (token0.allowance(address(this), address(bunniHub)) != 0) {
+            token0.safeApprove(address(bunniHub), 0);
+        }
+        if (token1.allowance(address(this), address(bunniHub)) != 0) {
+            token1.safeApprove(address(bunniHub), 0);
+        }
+
         // stake Bunni shares into gauge
-        bunniHub.getBunniToken(depositParams.key).approve(address(gauge), shares);
+        ERC20 bunniToken = ERC20(address(bunniHub.getBunniToken(depositParams.key)));
+        bunniToken.safeApprove(address(gauge), shares);
         gauge.deposit(shares, recipient);
+
+        // reset approvals
+        if (bunniToken.allowance(address(this), address(gauge)) != 0) {
+            bunniToken.safeApprove(address(gauge), 0);
+        }
 
         // refund tokens
         uint256 balance = token0.balanceOf(address(this));
@@ -194,6 +208,14 @@ contract BunniLpZapIn is ReentrancyGuard, Multicall, SelfPermit {
         (shares, addedLiquidity, amount0, amount1) = bunniHub.deposit(depositParams);
         if (shares < sharesMin) {
             revert BunniLpZapIn__InsufficientOutput();
+        }
+
+        // reset approvals
+        if (token0.allowance(address(this), address(bunniHub)) != 0) {
+            token0.safeApprove(address(bunniHub), 0);
+        }
+        if (token1.allowance(address(this), address(bunniHub)) != 0) {
+            token1.safeApprove(address(bunniHub), 0);
         }
 
         // refund tokens
@@ -341,6 +363,11 @@ contract BunniLpZapIn is ReentrancyGuard, Multicall, SelfPermit {
         (bool success,) = zeroExProxy.call(swapData);
         if (!success) {
             revert BunniLpZapIn__ZeroExSwapFailed();
+        }
+
+        // reset approvals
+        if (tokenIn.allowance(address(this), address(zeroExProxy)) != 0) {
+            tokenIn.safeApprove(address(zeroExProxy), 0);
         }
 
         // check slippage
