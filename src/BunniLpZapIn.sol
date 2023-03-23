@@ -7,7 +7,6 @@ import {ILiquidityGauge} from "gauge-foundry/interfaces/ILiquidityGauge.sol";
 
 import {WETH} from "solmate/tokens/WETH.sol";
 import {ERC20} from "solmate/tokens/ERC20.sol";
-import {ReentrancyGuard} from "solmate/utils/ReentrancyGuard.sol";
 import {SafeTransferLib} from "solmate/utils/SafeTransferLib.sol";
 
 import {Gate, IxPYT} from "timeless/Gate.sol";
@@ -15,7 +14,7 @@ import {Gate, IxPYT} from "timeless/Gate.sol";
 import {Multicall} from "./lib/Multicall.sol";
 import {SelfPermit} from "./lib/SelfPermit.sol";
 
-contract BunniLpZapIn is ReentrancyGuard, Multicall, SelfPermit {
+contract BunniLpZapIn is Multicall, SelfPermit {
     /// -----------------------------------------------------------------------
     /// Library usage
     /// -----------------------------------------------------------------------
@@ -86,13 +85,7 @@ contract BunniLpZapIn is ReentrancyGuard, Multicall, SelfPermit {
         bool useContractBalance0,
         bool useContractBalance1,
         bool compound
-    )
-        external
-        payable
-        virtual
-        nonReentrant
-        returns (uint256 shares, uint128 addedLiquidity, uint256 amount0, uint256 amount1)
-    {
+    ) external payable virtual returns (uint256 shares, uint128 addedLiquidity, uint256 amount0, uint256 amount1) {
         // transfer tokens in and modify deposit params
         if (!useContractBalance0) {
             token0.safeTransferFrom(msg.sender, address(this), depositParams.amount0Desired);
@@ -176,13 +169,7 @@ contract BunniLpZapIn is ReentrancyGuard, Multicall, SelfPermit {
         bool useContractBalance0,
         bool useContractBalance1,
         bool compound
-    )
-        external
-        payable
-        virtual
-        nonReentrant
-        returns (uint256 shares, uint128 addedLiquidity, uint256 amount0, uint256 amount1)
-    {
+    ) external payable virtual returns (uint256 shares, uint128 addedLiquidity, uint256 amount0, uint256 amount1) {
         // transfer tokens in and modify deposit params
         if (!useContractBalance0) {
             token0.safeTransferFrom(msg.sender, address(this), depositParams.amount0Desired);
@@ -250,7 +237,7 @@ contract BunniLpZapIn is ReentrancyGuard, Multicall, SelfPermit {
         IxPYT xPYT,
         uint256 underlyingAmount,
         bool useContractBalance
-    ) external payable nonReentrant returns (uint256 mintAmount) {
+    ) external payable returns (uint256 mintAmount) {
         // transfer tokens in
         ERC20 underlying = gate.getUnderlyingOfVault(vault);
         if (!useContractBalance) {
@@ -284,7 +271,7 @@ contract BunniLpZapIn is ReentrancyGuard, Multicall, SelfPermit {
         IxPYT xPYT,
         uint256 vaultSharesAmount,
         bool useContractBalance
-    ) external payable nonReentrant returns (uint256 mintAmount) {
+    ) external payable returns (uint256 mintAmount) {
         // transfer tokens in
         ERC20 vaultToken = ERC20(vault);
         if (!useContractBalance) {
@@ -340,7 +327,7 @@ contract BunniLpZapIn is ReentrancyGuard, Multicall, SelfPermit {
         bool useContractBalance,
         uint256 deadline,
         bytes calldata swapData
-    ) external payable virtual nonReentrant returns (uint256 tokenAmountOut) {
+    ) external payable virtual returns (uint256 tokenAmountOut) {
         // check if input token equals output
         if (tokenIn == tokenOut) {
             revert BunniLpZapIn__SameToken();
