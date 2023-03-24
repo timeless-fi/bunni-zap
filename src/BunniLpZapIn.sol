@@ -88,12 +88,16 @@ contract BunniLpZapIn is Multicall, SelfPermit {
     ) external payable virtual returns (uint256 shares, uint128 addedLiquidity, uint256 amount0, uint256 amount1) {
         // transfer tokens in and modify deposit params
         if (!useContractBalance0) {
-            token0.safeTransferFrom(msg.sender, address(this), depositParams.amount0Desired);
+            if (depositParams.amount0Desired != 0) {
+                token0.safeTransferFrom(msg.sender, address(this), depositParams.amount0Desired);
+            }
         } else {
             depositParams.amount0Desired = token0.balanceOf(address(this));
         }
         if (!useContractBalance1) {
-            token1.safeTransferFrom(msg.sender, address(this), depositParams.amount1Desired);
+            if (depositParams.amount1Desired != 0) {
+                token1.safeTransferFrom(msg.sender, address(this), depositParams.amount1Desired);
+            }
         } else {
             depositParams.amount1Desired = token1.balanceOf(address(this));
         }
@@ -105,8 +109,12 @@ contract BunniLpZapIn is Multicall, SelfPermit {
         }
 
         // approve tokens to Bunni
-        token0.safeApprove(address(bunniHub), depositParams.amount0Desired);
-        token1.safeApprove(address(bunniHub), depositParams.amount1Desired);
+        if (depositParams.amount0Desired != 0) {
+            token0.safeApprove(address(bunniHub), depositParams.amount0Desired);
+        }
+        if (depositParams.amount1Desired != 0) {
+            token1.safeApprove(address(bunniHub), depositParams.amount1Desired);
+        }
 
         // deposit tokens into Bunni
         (shares, addedLiquidity, amount0, amount1) = bunniHub.deposit(depositParams);
@@ -115,10 +123,10 @@ contract BunniLpZapIn is Multicall, SelfPermit {
         }
 
         // reset approvals
-        if (token0.allowance(address(this), address(bunniHub)) != 0) {
+        if (depositParams.amount0Desired != 0 && token0.allowance(address(this), address(bunniHub)) != 0) {
             token0.safeApprove(address(bunniHub), 0);
         }
-        if (token1.allowance(address(this), address(bunniHub)) != 0) {
+        if (depositParams.amount1Desired != 0 && token1.allowance(address(this), address(bunniHub)) != 0) {
             token1.safeApprove(address(bunniHub), 0);
         }
 
@@ -172,12 +180,16 @@ contract BunniLpZapIn is Multicall, SelfPermit {
     ) external payable virtual returns (uint256 shares, uint128 addedLiquidity, uint256 amount0, uint256 amount1) {
         // transfer tokens in and modify deposit params
         if (!useContractBalance0) {
-            token0.safeTransferFrom(msg.sender, address(this), depositParams.amount0Desired);
+            if (depositParams.amount0Desired != 0) {
+                token0.safeTransferFrom(msg.sender, address(this), depositParams.amount0Desired);
+            }
         } else {
             depositParams.amount0Desired = token0.balanceOf(address(this));
         }
         if (!useContractBalance1) {
-            token1.safeTransferFrom(msg.sender, address(this), depositParams.amount1Desired);
+            if (depositParams.amount1Desired != 0) {
+                token1.safeTransferFrom(msg.sender, address(this), depositParams.amount1Desired);
+            }
         } else {
             depositParams.amount1Desired = token1.balanceOf(address(this));
         }
